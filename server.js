@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const STUDENTS_FILE = path.join(DATA_DIR, 'students.json');
 
+// Ensure data directory & file exist
 async function ensureDataFile() {
   if (!fsSync.existsSync(DATA_DIR)) {
     fsSync.mkdirSync(DATA_DIR, { recursive: true });
@@ -19,6 +20,7 @@ async function ensureDataFile() {
   }
 }
 
+// Read students safely
 async function readStudents() {
   await ensureDataFile();
   try {
@@ -26,16 +28,18 @@ async function readStudents() {
     return JSON.parse(raw);
   } catch (err) {
     if (err instanceof SyntaxError) {
+      // Backup corrupted file
       const backup = `${STUDENTS_FILE}.corrupt.${Date.now()}`;
       await fs.rename(STUDENTS_FILE, backup);
       await fs.writeFile(STUDENTS_FILE, '[]', 'utf8');
-      console.error('students.json was corrupted. Backed up to:', backup);
+      console.error('students.json corrupted. Backed up to:', backup);
       return [];
     }
     throw err;
   }
 }
 
+// Write students safely
 async function writeStudents(students) {
   await ensureDataFile();
   await fs.writeFile(STUDENTS_FILE, JSON.stringify(students, null, 2), 'utf8');
@@ -43,14 +47,21 @@ async function writeStudents(students) {
 
 const app = express();
 
+// Middleware
 app.use(cors());
-app.options('*', cors());
 app.use(express.json());
 
+// ✅ Root route (friendly message)
+app.get('/', (req, res) => {
+  res.send('✅ Student API is running! Use /api/students');
+});
+
+// ✅ Add a new student
 app.post('/api/students', async (req, res) => {
   try {
     const { name, age, course, year, status } = req.body ?? {};
 
+    // Validation
     if (!name || String(name).trim() === '') {
       return res.status(400).json({ error: 'Name is required and cannot be blank.' });
     }
@@ -86,6 +97,7 @@ app.post('/api/students', async (req, res) => {
   }
 });
 
+// ✅ Get all students
 app.get('/api/students', async (req, res) => {
   try {
     const students = await readStudents();
@@ -96,11 +108,13 @@ app.get('/api/students', async (req, res) => {
   }
 });
 
+// Generic error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`Student API listening on port ${PORT}`);
+  console.log(`🚀 Student API listening on port ${PORT}`);
 });
