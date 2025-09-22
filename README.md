@@ -27,7 +27,7 @@ Example response: `201 Created` with created student JSON.
 Returns: JSON array of student objects.
 
 ## Deployed URL
-`https://student-api-[yourname].onrender.com`
+`https://student-api-sahithi-1.onrender.com`
 
 
 ## Notes
